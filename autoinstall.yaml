@@ -1,0 +1,78 @@
+autoinstall:
+  version: 1
+
+  storage:
+    layout:
+      name: lvm
+
+  identity:
+    hostname: workstation
+    username: cesarjunior
+    password: "$6$xywt0ZnSqd2G7qwD$ztTYHGOnSD.u0XMkEgZcMy8/kwQZs6.n35QvaQ7CvYVxxlPNaDsghpn1dwnIcv6..VGitw4AwNbqQmBsbmMx40"
+
+  locale: pt_BR.UTF-8
+  timezone: America/Cuiaba
+
+  ssh:
+    install-server: true
+    allow-pw: true
+
+  packages:
+    - curl
+    - wget
+    - git
+    - htop
+    - net-tools
+    - jq
+    - tree
+    - bash-completion
+    - ca-certificates
+    - gnupg
+    - lsb-release
+    - software-properties-common
+    - ufw
+
+  late-commands:
+    - curtin in-target --target=/target -- apt update
+    - curtin in-target --target=/target -- apt upgrade -y
+
+    # Docker oficial
+    - >-
+      curtin in-target --target=/target -- bash -c
+      'set -e;
+      install -m 0755 -d /etc/apt/keyrings;
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg;
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list;
+      apt update;
+      apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin'
+
+    - curtin in-target --target=/target -- usermod -aG docker cesarjunior
+
+    # Oh My Bash + tema lambda
+    - >-
+      curtin in-target --target=/target -- sudo -u cesarjunior bash -c
+      'set -e;
+      RUNZSH=no KEEP_ZSHRC=yes bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)";
+      sed -i "s/^OSH_THEME=.*/OSH_THEME=\"lambda\"/" /home/cesarjunior/.bashrc'
+
+    # Zera plugins de forma segura (remove bloco multi-linha e define plugins=())
+    - >-
+      curtin in-target --target=/target -- bash -c
+      'set -e;
+      perl -0777 -i -pe "s/^plugins=\\([\\s\\S]*?\\)\\s*$/plugins=()\\n/mg" /home/cesarjunior/.bashrc;
+      grep -q "^plugins=" /home/cesarjunior/.bashrc || echo "plugins=()" >> /home/cesarjunior/.bashrc'
+
+    # Bash completion (git, docker, ssh)
+    - >-
+      curtin in-target --target=/target -- bash -c
+      'printf "\n# Bash Completion (git, docker, ssh)\nif [ -r /etc/bash_completion ]; then\n  . /etc/bash_completion\nfi\n" >> /home/cesarjunior/.bashrc'
+
+    - curtin in-target --target=/target -- chown -R cesarjunior:cesarjunior /home/cesarjunior
+
+    # Firewall
+    - curtin in-target --target=/target -- ufw default deny incoming
+    - curtin in-target --target=/target -- ufw default allow outgoing
+    - curtin in-target --target=/target -- ufw allow OpenSSH
+    - curtin in-target --target=/target -- ufw --force enable
+
+  reboot: true
