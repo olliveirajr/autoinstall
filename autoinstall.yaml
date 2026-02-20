@@ -90,6 +90,10 @@ autoinstall:
       printf "\n# Exibir MOTD no terminal desktop\nif [ -z \"\$SSH_CONNECTION\" ] && [ -x /usr/bin/run-parts ]; then\n  run-parts /etc/update-motd.d/ 2>/dev/null\nfi\n" >> /home/cesarjunior/.bashrc
       '
 
+    - >-
+      curtin in-target --target=/target -- bash -c
+      'chmod -x /etc/update-motd.d/10-help-text /etc/update-motd.d/50-motd-news /etc/update-motd.d/80-esm /etc/update-motd.d/80-livepatch 2>/dev/null || true'
+
     - curtin in-target --target=/target -- chown -R cesarjunior:cesarjunior /home/cesarjunior
 
     # Firewall
