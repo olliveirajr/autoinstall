@@ -81,7 +81,7 @@ autoinstall:
       base="https://raw.githubusercontent.com/olliveirajr/autoinstall/refs/heads/main/templates/motd";
       mkdir -p /etc/update-motd.d;
       rm -f /etc/update-motd.d/*;
-      for f in 10-hostname 20-sysinfo 30-uptime 35-diskspace 40-services; do
+      for f in 10-hostname 20-sysinfo 20-uptime 35-diskspace 40-services; do
         curl -fsSL "$base/$f" -o "/etc/update-motd.d/$f";
       done;
       chmod +x /etc/update-motd.d/*;
