@@ -73,12 +73,13 @@ autoinstall:
       'printf "\n# Bash Completion (git, docker, ssh)\nif [ -r /etc/bash_completion ]; then\n  . /etc/bash_completion\nfi\n" >> /home/cesarjunior/.bashrc'
 
     # -------------------------------------------------------
-    # MOTD customizado (remove padrão e instala template versionado)
+    # MOTD customizado (banner + sysinfo + disk + services)
     # -------------------------------------------------------
     - >-
       curtin in-target --target=/target -- bash -c
       'set -e;
-      base="https://raw.githubusercontent.com/olliveirajr/autoinstall/main/templates/motd";
+      base="https://raw.githubusercontent.com/olliveirajr/autoinstall/refs/heads/main/templates/motd";
+      mkdir -p /etc/update-motd.d;
       rm -f /etc/update-motd.d/*;
       for f in 10-hostname 20-sysinfo 30-uptime 35-diskspace 40-services; do
         curl -fsSL "$base/$f" -o "/etc/update-motd.d/$f";
