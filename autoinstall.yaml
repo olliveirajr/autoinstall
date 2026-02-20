@@ -1,3 +1,4 @@
+#cloud-config
 autoinstall:
   version: 1
 
@@ -31,6 +32,7 @@ autoinstall:
     - lsb-release
     - software-properties-common
     - ufw
+    - figlet
 
   late-commands:
     - curtin in-target --target=/target -- apt update
@@ -55,7 +57,7 @@ autoinstall:
       RUNZSH=no KEEP_ZSHRC=yes bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)";
       sed -i "s/^OSH_THEME=.*/OSH_THEME=\"lambda\"/" /home/cesarjunior/.bashrc'
 
-    # Zera plugins de forma segura (remove bloco multi-linha e define plugins=())
+    # Zera plugins do Oh My Bash (evita quebrar .bashrc)
     - >-
       curtin in-target --target=/target -- bash -c
       'set -e;
@@ -66,6 +68,20 @@ autoinstall:
     - >-
       curtin in-target --target=/target -- bash -c
       'printf "\n# Bash Completion (git, docker, ssh)\nif [ -r /etc/bash_completion ]; then\n  . /etc/bash_completion\nfi\n" >> /home/cesarjunior/.bashrc'
+
+    # -------------------------------------------------------
+    # MOTD customizado (remove padrão e instala template versionado)
+    # -------------------------------------------------------
+    - >-
+      curtin in-target --target=/target -- bash -c
+      'set -e;
+      base="https://raw.githubusercontent.com/olliveirajr/autoinstall/main/templates/motd";
+      rm -f /etc/update-motd.d/*;
+      for f in 10-hostname 20-sysinfo 30-uptime 35-diskspace 40-services; do
+        curl -fsSL "$base/$f" -o "/etc/update-motd.d/$f";
+      done;
+      chmod +x /etc/update-motd.d/*;
+      truncate -s 0 /etc/motd'
 
     - curtin in-target --target=/target -- chown -R cesarjunior:cesarjunior /home/cesarjunior
 
